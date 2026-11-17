@@ -325,6 +325,12 @@ export function createChromeMock(): ChromeMock {
     }
   }
 
+  // Como no Chrome, o grupo some junto com a última aba (fechada ou desagrupada).
+  const dropGroupIfEmpty = (groupId: unknown) => {
+    if (typeof groupId !== "number" || groupId < 0) return
+    if (![...tabs.values()].some((tab) => tab.groupId === groupId)) groups.delete(groupId)
+  }
+
   const tabsApi = {
     get: vi.fn(async (id: number) => {
       const tab = tabs.get(id)
@@ -333,6 +339,7 @@ export function createChromeMock(): ChromeMock {
     }),    query: vi.fn(async (filter: Record<string, unknown> = {}) => {
       let list = [...tabs.values()]
       if (typeof filter.groupId === "number") list = list.filter((tab) => tab.groupId === filter.groupId)
+      if (typeof filter.windowId === "number") list = list.filter((tab) => tab.windowId === filter.windowId)
       if (typeof filter.url === "string") {
         const pattern = String(filter.url).replace(/\*/g, "")
         list = list.filter((tab) => tab.url.includes(pattern))
@@ -369,11 +376,7 @@ export function createChromeMock(): ChromeMock {
       for (const id of Array.isArray(ids) ? ids : [ids]) {
         const groupId = tabs.get(id)?.groupId
         tabs.delete(id)
-        // Como no Chrome, o grupo some junto com a última aba.
-        if (typeof groupId === "number" && groupId >= 0) {
-          const empty = ![...tabs.values()].some((tab) => tab.groupId === groupId)
-          if (empty) groups.delete(groupId)
-        }
+        dropGroupIfEmpty(groupId)
       }
     }),
     group: vi.fn(async ({ tabIds, groupId }: { tabIds: number | number[]; groupId?: number }) => {
@@ -405,7 +408,10 @@ export function createChromeMock(): ChromeMock {
     ungroup: vi.fn(async (ids: number | number[]) => {
       for (const id of Array.isArray(ids) ? ids : [ids]) {
         const tab = tabs.get(id)
-        if (tab) tab.groupId = -1
+        if (!tab) continue
+        const groupId = tab.groupId
+        tab.groupId = -1
+        dropGroupIfEmpty(groupId)
       }
     }),
     move: vi.fn(async (id: number, props: { windowId?: number; index?: number } = {}) => {

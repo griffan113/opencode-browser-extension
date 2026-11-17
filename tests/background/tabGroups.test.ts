@@ -714,51 +714,48 @@ describe("background/tabGroups: sessões paralelas", () => {
     expect(chromeMock.__state.groups.get(record.groupId)?.title).toBe("OpenCode")
   })
 
-  it("release fecha todas as abas do grupo e remove o vínculo", async () => {
+  it("release fecha abas em branco e desagrupa páginas", async () => {
     const record = await groups.ensure("ses_1")
-    const other = chromeMock.__state.addTab({ url: "https://user.example/", active: true })
     const page = chromeMock.__state.addTab({
       groupId: record.groupId,
       url: "https://a.example/",
-      active: false,
     })
 
     await groups.release("ses_1")
 
     expect(chromeMock.__state.tabs.has(record.mainTabId)).toBe(false)
-    expect(chromeMock.__state.tabs.has(page.id)).toBe(false)
-    expect(chromeMock.__state.tabs.has(other.id)).toBe(true)
-    expect(chromeMock.tabs.ungroup).not.toHaveBeenCalled()
+    expect(chromeMock.__state.tabs.get(page.id)?.groupId).toBe(-1)
     expect(chromeMock.__state.groups.has(record.groupId)).toBe(false)
     expect(storedRecords()).toEqual([])
   })
 
-  it("release fecha também a aba que o grupo mantinha ativa", async () => {
+  it("release preserva a página real e o grupo some ao desagrupar a última aba", async () => {
+    const record = await groups.ensure("ses_1")
+    const page = chromeMock.__state.addTab({
+      groupId: record.groupId,
+      url: "https://a.example/",
+      active: false,
+    })
+    chromeMock.__state.tabs.get(record.mainTabId)!.active = false
+
+    await groups.release("ses_1")
+
+    expect(chromeMock.__state.tabs.has(page.id)).toBe(true)
+    expect(chromeMock.__state.tabs.get(page.id)?.groupId).toBe(-1)
+    expect(chromeMock.__state.groups.has(record.groupId)).toBe(false)
+    expect(chromeMock.tabs.remove).toHaveBeenCalledTimes(1)
+    expect(chromeMock.tabs.remove).toHaveBeenCalledWith(record.mainTabId)
+  })
+
+  it("release não fecha a aba em branco que o usuário está usando", async () => {
     const record = await groups.ensure("ses_1")
     chromeMock.__state.tabs.get(record.mainTabId)!.active = true
 
     await groups.release("ses_1")
 
-    expect(chromeMock.__state.tabs.has(record.mainTabId)).toBe(false)
-  })
-
-  it("release preserva a janela quando o grupo é o único conteúdo dela", async () => {
-    chromeMock.__state.tabs.clear()
-    const record = await groups.ensure("ses_1", undefined, 7)
-
-    await groups.release("ses_1")
-
-    expect(chromeMock.__state.tabs.has(record.mainTabId)).toBe(false)
-    const remaining = [...chromeMock.__state.tabs.values()]
-    expect(remaining).toHaveLength(1)
-    expect(remaining[0].windowId).toBe(7)
-    expect(remaining[0].groupId).toBe(-1)
-  })
-
-  it("release ignora sessões sem grupo", async () => {
-    await groups.release("ses_inexistente")
-
-    expect(chromeMock.tabs.remove).not.toHaveBeenCalled()
+    expect(chromeMock.__state.tabs.has(record.mainTabId)).toBe(true)
+    expect(chromeMock.__state.tabs.get(record.mainTabId)?.groupId).toBe(-1)
+    expect(chromeMock.__state.groups.has(record.groupId)).toBe(false)
   })
 
   it("cleanup reconhece grupos com nome de sessão e preserva os demais", async () => {
