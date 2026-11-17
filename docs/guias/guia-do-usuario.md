@@ -31,7 +31,26 @@ funciona no terminal, a extensão funciona.
 
 ## 2. Instalar a extensão
 
-### 2.1 Pelo script (recomendado)
+### 2.1 Pelo pacote pronto (recomendado)
+
+[Baixe o ZIP da última release](https://github.com/marcos2872/opencode-browser-extension/releases/latest/download/opencode-browser-extension.zip)
+e extraia os arquivos. O pacote já inclui a extensão compilada, o plugin e o
+instalador do plugin; não é necessário rodar `npm install` ou compilar o projeto.
+
+1. Abra `chrome://extensions` e ative o **modo desenvolvedor**.
+2. Clique em **Carregar sem compactação** e selecione a pasta `extension/` que
+   veio no ZIP.
+3. No terminal, dentro da pasta extraída do pacote, execute:
+
+   ```bash
+   node scripts/install-plugin.mjs
+   opencode service restart
+   ```
+
+4. Abra o side panel e clique em **Conectar**. No terminal, rode `opencode pair`
+   e cole o link exibido no painel.
+
+### 2.2 Pelo script do projeto
 
 Na pasta do projeto:
 
@@ -46,8 +65,9 @@ Na pasta do projeto:
 
 O script, nesta ordem:
 
-1. confere se existem **Node.js 20+**, **npm** e **OpenCode v2+** (para com uma
-   mensagem clara se faltar algum);
+1. confere se existem **[Node.js 20+](https://nodejs.org/en/download)**, **npm**
+   e **[OpenCode v2+](https://opencode.ai/docs/)** (para com uma mensagem clara
+   se faltar algum);
 2. instala as dependências (`npm install`);
 3. gera o build da extensão (`npm run build`) em `dist/`;
 4. copia o plugin e o template do agente para a pasta de plugins do OpenCode
@@ -62,7 +82,7 @@ verifique.
 > OpenCode em um terminal, a sessão atual cai por alguns segundos e reconecta —
 > não é erro.
 
-### 2.2 Manual
+### 2.3 Manual
 
 ```bash
 npm install
@@ -79,7 +99,7 @@ Depois, no Chrome:
    projeto (não a raiz);
 4. o ícone do OpenCode Browser aparece na barra.
 
-### 2.3 Depois de atualizar o código
+### 2.4 Depois de atualizar o código
 
 O Chrome mantém o service worker em cache. Sempre que você rodar
 `npm run build` de novo:
@@ -303,9 +323,10 @@ nascem em segundo plano, e a janela em que você está trabalhando continua onde
 está. Se você preferir ver as abas surgindo, ligue **“Permitir que abas abertas
 ou anexadas pelo agente venham para frente”** nas configurações.
 
-Na página em que o agente está agindo aparece uma moldura laranja com o aviso
-**“OpenCode está nesta aba”**, um **Parar** e um cursor animado mostrando onde
-ele clica.
+Na página em que o agente está agindo aparece uma borda azul pastel animada com o aviso
+**“OpenCode está nesta aba”**, um **Parar** e um mouse virtual que desliza até
+o alvo e mostra uma onda a cada clique. A borda fica acesa enquanto o agente
+trabalha e some sozinha pouco depois que ele termina.
 
 ### Conectar uma aba sua ao agente
 
@@ -572,7 +593,7 @@ alterações; o aviso **“Permissões salvas.”** confirma.
 | **Ponto verde/vermelho/âmbar** no cabeçalho | API online, offline ou conectando |
 | **Banner de conexão** | Explica a falha e oferece **Tentar novamente**, **Reconectar** ou **Abrir configurações** |
 | **Faixa de status** abaixo do chat | Tentativas de reconexão e mensagens do backend |
-| **Moldura laranja na página** | O agente está agindo naquela aba; tem botão **Parar** |
+| **Borda azul na página** | O agente está agindo naquela aba; tem botão **Parar** |
 | **“ferramentas conectadas” / “ferramentas offline”** | Estado do plugin no rodapé do composer |
 | **Som + notificação** | Algo aconteceu com o painel fechado (fim de execução, permissão, pergunta) |
 | **Aviso temporário no rodapé** | Confirmação ou erro de uma ação sua |
